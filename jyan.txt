@@ -1,0 +1,10 @@
+link = https://docs.nestjs.com/techniques/database/
+nest new projectName
+to install typeorm -> npm i --save @nestjs/typeorm typeorm
+to install sqlite3 -> npm i --save @nestjs/typeorm sqlite3
+to start -> npm run start:dev
+to set swagger Ui -> npm i --save @nestjs/swagger swagger-ui-express
+migration :  TypeORM provides migration support to help you manage database schema changes over time
+when getting Issue like driver not found , in that case try to delete node module and install it again
+QueryBuilder -> 
+Relation -> to join the tables
