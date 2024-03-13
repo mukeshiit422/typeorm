@@ -1,46 +1,86 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { User } from './user.entity';
-
+import { Employee } from './employee.entity';
+import { DataSource, Repository } from 'typeorm';
+import { ContactInfo } from './contact-info.entity';
+import { Task } from './task.entity';
+import { Meetings } from './meetings.entity';
+import { GetUser } from './getUser.service';
 
 @Injectable()
 export class AppService {
-  constructor(@InjectRepository(User) private userRepository:Repository<User>){}
+  constructor(@InjectRepository(Employee) private employeeRepo:Repository<Employee>,
+   @InjectRepository(ContactInfo) private contactInfoRepo:Repository<ContactInfo>,
+   @InjectRepository(Task) private taskRepo:Repository<Task>,
+   @InjectRepository(Meetings) private meetingsRepo:Repository<Meetings>,
+   private getUser:GetUser
+  ){}
+  async seed(){
+    const ceo=this.employeeRepo.create({name:"Mr Gudu"});
+    await this.employeeRepo.save(ceo);
 
-  getAllUsers():Promise<User[]> {
-    return this.userRepository.find({
-      relations:['pets']
-    });//select * from User
+    const contactInfo=this.contactInfoRepo.create({
+      email:"emailGudu@gmail.com",
+      phone:123
+    })
+
+    contactInfo.employee=ceo;
+    await this.contactInfoRepo.save(contactInfo);
+
+    const manager=this.employeeRepo.create({
+      name:"Ravi",
+      manager:ceo
+    })
+    const task1=this.taskRepo.create({name:"solve quiz"});
+    await this.taskRepo.save(task1);
+    const task2=this.taskRepo.create({name:"answer"});
+     await this.taskRepo.save(task2);
+
+    const meetings=this.meetingsRepo.create({url:"meeting3"});
+   await this.meetingsRepo.save(meetings);
+    meetings.attendee=[ceo];
+    manager.meetings=[meetings]
+    manager.task=[task1,task2];
+
+   await this.employeeRepo.save(manager);
   }
 
-  // async getOneUser(id: Number):Promise<User> {
-  //   try{
-  //     const user=await this.userRepository.fin
-  //     return user;
-  //   } 
-  //   catch(err){
-  //     throw err;
-  //   }
-  //   //select *from user where user.id==id
-  // }
+  async getElementById(id:Number){
+    return this.employeeRepo.findOne({
+      where:{
+        id:id
+      },
+      relations:{
+        manager:true,
+        directReports:true,
+        task:true
+      }
+    })
 
-  createUser(name:string):Promise<User>{
-      const newUser=this.userRepository.create({name});
-      console.log("user>>",newUser)
-      return this.userRepository.save(newUser);
-  } 
-  // async updateuser(id:Number , name:string):Promise<User>{
-  //    const user=await this.getOneUser(id);
-  //    user.name=name;
-  //    return this.userRepository.save(user);
-  // }
   
-  // async deleteUser():Promise<User>{
-  //   const user=await this.getOneUser(id);
-  //  return  this.userRepository.remove(user);
-  // }
-  getHello(): string {
-    return 'Hello World!';
+     // relations: ['manager','directReports','contactInfo','task','meetings']}
+     
   }
+  async getAllusers():Promise<any>{
+    //const useRepo=this.employeeRepo.createQueryBuilder().select("id","myId").addSelect("name","myName").getRawOne();
+    const repo=this.employeeRepo.query(`select e.id as "UserId(jhuh hbhb)", e.name as myName from employee e `)
+    //const user=this.employeeRepo.find({
+      //select:["id","name"]
+    //})
+    return repo;
+
+  }
+  async userAll():Promise<any>{
+    const employee = await this.getUser.getUser();
+    // const dataChange=employee.map((e)=>({
+    //   ...e,
+    //   id:e.id==6 ? "six":1,
+    //   "full_name hh yy":e.name
+    // }))
+    // console.log("dataChange>>",dataChange)
+    return employee;
+  }
+  // getHello(): string {
+  //   return 'Hello World!';
+  // }
 }
